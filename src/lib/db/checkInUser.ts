@@ -1,5 +1,5 @@
-import { db } from "./db/db";
-import { users } from "./schema";
+import { db } from "./db";
+import { users } from "../schema";
 import { eq } from "drizzle-orm";
 import { currentUser } from "@clerk/nextjs/server";
 
@@ -31,6 +31,7 @@ export const checkUser = async () => {
         name,
         image: user.imageUrl,
         email: user.emailAddresses[0].emailAddress,
+        role: "COSTMER",
         // role will use default value "customer" if not specified
       })
       .returning();
