@@ -5,6 +5,7 @@ import './globals.css'
 import Headers from '@/components/headers'
 import Footer from '@/components/footer'
 import { ThemeProvider } from '@/components/theme-provider'
+import { ImageKitProvider } from "@imagekit/next"
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,9 +37,12 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Headers />
-            {children}
-            <Footer />
+            <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}>
+
+              <Headers />
+              {children}
+              <Footer />
+            </ImageKitProvider>
           </ThemeProvider>
         </body>
 

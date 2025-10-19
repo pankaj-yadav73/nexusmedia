@@ -3,8 +3,7 @@ import { posts, users } from "@/lib/schema";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse, NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
-
-import { userPostSchema, isServer } from "@/lib/validators/userPostSchema";
+import { getServerImage } from "@/lib/db/imagekit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,8 +22,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const body = await req.json();
-    const { content, imageUrl, videoUrl, isPublic } = body;
+    // Parse FormData instead of JSON for file uploads
+    const imagekit = getServerImage();
+
+    const formData = await req.formData();
+    const content = formData.get("content") as string;
+    const image = formData.get("image") as File | null;
+    const video = formData.get("video") as File | null;
+    const isPublic = formData.get("isPublic") === "true";
 
     if (!content || content.trim() === "") {
       return NextResponse.json(
@@ -33,14 +38,59 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let imageUrl: string | null = null;
+    let videoUrl: string | null = null;
+
+    // Upload image to ImageKit
+    if (image) {
+      try {
+        const bytes = await image.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        const uploadResponse = await imagekit.upload({
+          file: buffer,
+          fileName: `post-${Date.now()}-${image.name}`,
+          folder: "/posts/images",
+        });
+
+        imageUrl = uploadResponse.url;
+      } catch (uploadError) {
+        console.error("Image upload error:", uploadError);
+        return NextResponse.json(
+          { error: "Failed to upload image" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Upload video to ImageKit
+    if (video) {
+      try {
+        const bytes = await video.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        const uploadResponse = await imagekit.upload({
+          file: buffer,
+          fileName: `post-${Date.now()}-${video.name}`,
+          folder: "/posts/videos",
+        });
+
+        videoUrl = uploadResponse.url;
+      } catch (uploadError) {
+        console.error("Video upload error:", uploadError);
+        return NextResponse.json(
+          { error: "Failed to upload video" },
+          { status: 500 }
+        );
+      }
+    }
+
     const newPost = await db
       .insert(posts)
       .values({
         userId: dbUser[0].id,
-        content,
-        imageUrl: imageUrl || null,
-        videoUrl: videoUrl || null,
-        isPublic: isPublic ?? true,
+        description: content,
+        Image: imageUrl || null,
       })
       .returning();
 
@@ -52,8 +102,36 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    console.error("Post creation error:", error);
     return NextResponse.json(
       { error: "Failed to create post" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    // Join posts with users to return author info
+    const rows = await db
+      .select({
+        id: posts.id,
+        description: posts.description,
+        Image: posts.Image,
+        userId: posts.userId,
+        createdAt: posts.createdAt,
+        userName: users.name,
+        userImage: users.image,
+      })
+      .from(posts)
+      .leftJoin(users, eq(posts.userId, users.id))
+      .limit(50);
+
+    return NextResponse.json({ success: true, data: rows }, { status: 200 });
+  } catch (err) {
+    console.error("Failed to fetch posts", err);
+    return NextResponse.json(
+      { error: "Failed to fetch posts" },
       { status: 500 }
     );
   }

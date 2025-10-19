@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPost } from "@/http/api"
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import type { Post } from "./CreatePost";
 
 const PostCard: React.FC<{ post: Post }> = ({ post }) => {
+
     const [liked, setLiked] = useState(false);
     const [likes, setLikes] = useState<number>(post.likes || 0);
 

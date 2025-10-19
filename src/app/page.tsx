@@ -1,9 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
-import Headers from "@/components/headers";
-import Footer from "@/components/footer";
+import React, { useState, useEffect } from "react";
 import CreatePost from "@/components/CreatePost";
 import PostCard from "@/components/PostCard";
 
@@ -17,42 +15,54 @@ type Post = {
   createdAt: string;
 };
 
-const DUMMY_POSTS: Post[] = [
-  {
-    id: "p1",
-    author: { name: "Alice", avatar: "/avatar1.png" },
-    content: "Just discovered a great coffee shop in town! ☕️",
-    image: null,
-    likes: 12,
-    comments: 3,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "p2",
-    author: { name: "Bob", avatar: "/avatar2.png" },
-    content: "Weekend road trip photos 🚗🌄",
-    image: "/cars/mustang.jpg",
-    likes: 45,
-    comments: 10,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "p3",
-    author: { name: "Chloe", avatar: "/avatar3.png" },
-    content: "Trying out some new recipes tonight — homemade pasta! 🍝",
-    image: null,
-    likes: 8,
-    comments: 1,
-    createdAt: new Date().toISOString(),
-  },
-];
+const DUMMY_POSTS: Post[] = [];
 
 export default function Homepage() {
   const [posts, setPosts] = useState<Post[]>(DUMMY_POSTS);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleNewPost = (post: Post) => {
     setPosts((p) => [post, ...p]);
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchPosts = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch("/actions/userposts");
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || "Failed to fetch posts");
+
+        const rows = json.data as unknown[];
+        const mapped: Post[] = rows.map((r) => {
+          const row = r as Record<string, unknown>;
+          return {
+            id: String(row["id"] ?? ""),
+            author: { name: String(row["userName"] ?? "Unknown"), avatar: String(row["userImage"] ?? "/avatar.png") },
+            content: String(row["description"] ?? ""),
+            image: (row["Image"] ?? null) as string | null,
+            likes: 0,
+            comments: 0,
+            createdAt: String(row["createdAt"] ?? new Date().toISOString()),
+          } as Post;
+        });
+        if (mounted) setPosts(mapped);
+      } catch (err: unknown) {
+        setError((err as Error)?.message ?? String(err));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchPosts();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 ">
@@ -60,6 +70,11 @@ export default function Homepage() {
         <section className="md:col-span-2 space-y-4">
           <CreatePost onPost={handleNewPost} />
           <div className="space-y-4">
+            {loading && <div className="p-4 text-center text-gray-500">Loading posts...</div>}
+            {error && <div className="p-4 text-center text-red-500">{error}</div>}
+            {!loading && !error && posts.length === 0 && (
+              <div className="p-4 text-center text-gray-500">No posts yet — be the first to post!</div>
+            )}
             {posts.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
