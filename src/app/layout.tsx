@@ -2,8 +2,8 @@ import { type Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-import Headers from '@/components/headers'
-import Footer from '@/components/footer'
+import LayoutWrapper from '@/components/LayoutWrapper'
+import React from 'react'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ImageKitProvider } from "@imagekit/next"
 
@@ -38,10 +38,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}>
-
-              <Headers />
-              {children}
-              <Footer />
+              <LayoutWrapper>{children}</LayoutWrapper>
             </ImageKitProvider>
           </ThemeProvider>
         </body>
@@ -50,3 +47,5 @@ export default function RootLayout({
     </ClerkProvider >
   )
 }
+
+// LayoutWrapper is a client component at src/components/LayoutWrapper.tsx

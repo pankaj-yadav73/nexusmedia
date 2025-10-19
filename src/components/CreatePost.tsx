@@ -45,7 +45,7 @@ const CreatePost: React.FC<Props> = ({ onPost }) => {
             const row = json?.data;
             const newPost: Post = {
                 id: String(row?.id ?? Date.now()),
-                author: { id: "", name: "You", avatar: "/avatar.png" },
+                author: { id: "", name: "You", avatar: "/avatar.svg" },
                 content: row?.description ?? text,
                 image: row?.Image ?? null,
                 likes: 0,
@@ -71,11 +71,11 @@ const CreatePost: React.FC<Props> = ({ onPost }) => {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="What's happening?"
-                className="w-full min-h-[80px] resize-none p-3 border rounded-md focus:outline-none focus:ring"
+                className="w-full min-h-[100px] resize-none p-3 border rounded-md focus:outline-none focus:ring"
             />
             <div className="flex items-center justify-between mt-3">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <label className="px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">
+                <div className="flex items-center gap-3 text-sm text-gray-600">
+                    <label className="px-2 py-1 rounded hover:bg-gray-100 cursor-pointer bg-gray-50">
                         <input
                             type="file"
                             accept="image/*"
@@ -89,7 +89,7 @@ const CreatePost: React.FC<Props> = ({ onPost }) => {
                         />
                         {file ? "Change Image" : "Add Image"}
                     </label>
-                    <button className="px-2 py-1 rounded hover:bg-gray-100" onClick={() => setIsPublic((v) => !v)}>
+                    <button className="px-2 py-1 rounded hover:bg-gray-100 bg-gray-50" onClick={() => setIsPublic((v) => !v)}>
                         {isPublic ? "Public" : "Private"}
                     </button>
                 </div>
@@ -102,8 +102,8 @@ const CreatePost: React.FC<Props> = ({ onPost }) => {
                 </button>
             </div>
             {preview && (
-                <div className="mt-3 relative w-full h-48">
-                    <Image src={preview} alt="preview" unoptimized fill className="object-contain rounded-md" />
+                <div className="mt-3 relative w-full h-44 rounded-md overflow-hidden">
+                    <Image src={preview} alt="preview" unoptimized fill className="object-cover" />
                 </div>
             )}
         </div>

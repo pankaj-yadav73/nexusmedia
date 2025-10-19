@@ -3,6 +3,7 @@
 import React from "react";
 import { Button } from "./ui/button";
 import { Heart, CarFront } from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
@@ -10,17 +11,23 @@ import { ModeToggle } from "./ui/darkmood";
 
 type Props = {
     isAdminPage?: boolean;
+    onToggleSidebar?: () => void;
 };
 
-const Headers: React.FC<Props> = ({ isAdminPage = false }) => {
+const Headers: React.FC<Props> = ({ isAdminPage = false, onToggleSidebar }) => {
     const { user } = useUser();
     return (
         <header className="fixed top-0 w-full bg-white/90 dark:bg-gray-900/80 backdrop-blur-md z-50 border-b border-gray-200 dark:border-gray-700">
             <nav className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
-                <Link href={isAdminPage ? "/admin" : "/"} className="flex items-center gap-3">
-                    <Image src="/logo.png" alt="Logo" width={160} height={40} className="h-10 w-auto object-contain" />
-                    {isAdminPage && <span className="text-xs font-extralight">admin</span>}
-                </Link>
+                <div className="flex items-center gap-3">
+                    <button onClick={onToggleSidebar} className="lg:hidden p-2 rounded-md hover:bg-gray-100">
+                        <Menu />
+                    </button>
+                    <Link href={isAdminPage ? "/admin" : "/"} className="flex items-center gap-3">
+                        <Image src="/logo.png" alt="Logo" width={160} height={40} className="h-10 w-auto object-contain" />
+                        {isAdminPage && <span className="text-xs font-extralight">admin</span>}
+                    </Link>
+                </div>
 
                 <div className="flex items-center space-x-4">
                     <SignedIn>
@@ -52,7 +59,7 @@ const Headers: React.FC<Props> = ({ isAdminPage = false }) => {
                         {user ? (
                             <Link href={`/users/${user.id}`} className="block rounded-full overflow-hidden w-10 h-10">
                                 <Image
-                                    src={user.imageUrl ?? "/avatar.png"}
+                                    src={user.imageUrl ?? "/avatar.svg"}
                                     alt={user.fullName ?? "Profile"}
                                     width={40}
                                     height={40}

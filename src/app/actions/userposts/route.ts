@@ -117,7 +117,7 @@ export async function GET() {
       .select({
         id: posts.id,
         description: posts.description,
-        Image: posts.Image,
+        image: posts.Image, // return as `image` (lowercase) for consistency in JSON
         userId: posts.userId,
         createdAt: posts.createdAt,
         userName: users.name,
