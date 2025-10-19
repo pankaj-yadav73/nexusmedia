@@ -22,17 +22,19 @@ export const checkUser = async () => {
     }
 
     // Create new user if not found
-    const name = `${user.firstName} ${user.lastName}`;
+    const first = user.firstName ?? "";
+    const last = user.lastName ?? "";
+    const name = (first || last) ? `${first} ${last}`.trim() : user.emailAddresses?.[0]?.emailAddress ?? user.primaryEmailAddress?.emailAddress ?? "Unknown";
+    const email = user.emailAddresses?.[0]?.emailAddress ?? user.primaryEmailAddress?.emailAddress ?? null;
 
     const newUser = await db
       .insert(users)
       .values({
         clerkUserId: user.id,
         name,
-        image: user.imageUrl,
-        email: user.emailAddresses[0].emailAddress,
-        role: "COSTMER",
-        // role will use default value "customer" if not specified
+        image: user.imageUrl ?? null,
+        email: email ?? "",
+        role: "customer",
       })
       .returning();
 

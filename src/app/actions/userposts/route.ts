@@ -1,5 +1,5 @@
 import { db } from "@/lib/db/db";
-import { posts, users } from "@/lib/schema";
+import { posts, users, likes, comments, shares } from "@/lib/schema";
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse, NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
@@ -117,7 +117,7 @@ export async function GET() {
       .select({
         id: posts.id,
         description: posts.description,
-        image: posts.Image, // return as `image` (lowercase) for consistency in JSON
+        image: posts.Image,
         userId: posts.userId,
         createdAt: posts.createdAt,
         userName: users.name,
@@ -127,7 +127,30 @@ export async function GET() {
       .leftJoin(users, eq(posts.userId, users.id))
       .limit(50);
 
-    return NextResponse.json({ success: true, data: rows }, { status: 200 });
+    // Enrich each post with counts (likes/comments/shares)
+    const enriched = await Promise.all(
+      rows.map(async (r) => {
+        const postId = r.id;
+        const likesRows = await db.select().from(likes).where(eq(likes.postId, postId));
+        const commentsRows = await db.select().from(comments).where(eq(comments.postId, postId));
+        const sharesRows = await db.select().from(shares).where(eq(shares.postId, postId));
+
+        return {
+          id: r.id,
+          description: r.description,
+          image: r.image ?? null,
+          userId: r.userId,
+          createdAt: r.createdAt,
+          userName: r.userName,
+          userImage: r.userImage,
+          likes: likesRows.length,
+          comments: commentsRows.length,
+          shares: sharesRows.length,
+        };
+      })
+    );
+
+    return NextResponse.json({ success: true, data: enriched }, { status: 200 });
   } catch (err) {
     console.error("Failed to fetch posts", err);
     return NextResponse.json(
