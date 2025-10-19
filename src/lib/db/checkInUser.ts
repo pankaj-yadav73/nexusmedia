@@ -24,8 +24,16 @@ export const checkUser = async () => {
     // Create new user if not found
     const first = user.firstName ?? "";
     const last = user.lastName ?? "";
-    const name = (first || last) ? `${first} ${last}`.trim() : user.emailAddresses?.[0]?.emailAddress ?? user.primaryEmailAddress?.emailAddress ?? "Unknown";
-    const email = user.emailAddresses?.[0]?.emailAddress ?? user.primaryEmailAddress?.emailAddress ?? null;
+    const name =
+      first || last
+        ? `${first} ${last}`.trim()
+        : user.emailAddresses?.[0]?.emailAddress ??
+          user.primaryEmailAddress?.emailAddress ??
+          "Unknown";
+    const email =
+      user.emailAddresses?.[0]?.emailAddress ??
+      user.primaryEmailAddress?.emailAddress ??
+      null;
 
     const newUser = await db
       .insert(users)
