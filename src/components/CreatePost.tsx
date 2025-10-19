@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export type Post = {
     id: string;
-    author: { name: string; avatar?: string };
+    author: { id?: string; name: string; avatar?: string };
     content: string;
     image?: string | null;
     likes: number;
@@ -45,7 +45,7 @@ const CreatePost: React.FC<Props> = ({ onPost }) => {
             const row = json?.data;
             const newPost: Post = {
                 id: String(row?.id ?? Date.now()),
-                author: { name: "You", avatar: "/avatar.png" },
+                author: { id: "", name: "You", avatar: "/avatar.png" },
                 content: row?.description ?? text,
                 image: row?.Image ?? null,
                 likes: 0,

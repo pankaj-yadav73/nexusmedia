@@ -4,7 +4,7 @@ import React from "react";
 import { Button } from "./ui/button";
 import { Heart, CarFront } from "lucide-react";
 import Link from "next/link";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { ModeToggle } from "./ui/darkmood";
 
@@ -13,6 +13,7 @@ type Props = {
 };
 
 const Headers: React.FC<Props> = ({ isAdminPage = false }) => {
+    const { user } = useUser();
     return (
         <header className="fixed top-0 w-full bg-white/90 dark:bg-gray-900/80 backdrop-blur-md z-50 border-b border-gray-200 dark:border-gray-700">
             <nav className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
@@ -47,6 +48,19 @@ const Headers: React.FC<Props> = ({ isAdminPage = false }) => {
                     </SignedOut>
 
                     <SignedIn>
+                        {/* Clickable avatar that redirects to profile page */}
+                        {user ? (
+                            <Link href={`/users/${user.id}`} className="block rounded-full overflow-hidden w-10 h-10">
+                                <Image
+                                    src={user.imageUrl ?? "/avatar.png"}
+                                    alt={user.fullName ?? "Profile"}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover rounded-full"
+                                />
+                            </Link>
+                        ) : null}
+
                         <UserButton
                             appearance={{
                                 elements: {

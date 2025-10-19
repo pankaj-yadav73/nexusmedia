@@ -29,6 +29,20 @@
       "when": 1760800796532,
       "tag": "0003_fine_eternity",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1760862030077,
+      "tag": "0004_melodic_corsair",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1760862210924,
+      "tag": "0005_faithful_scream",
+      "breakpoints": true
     }
   ]
 }

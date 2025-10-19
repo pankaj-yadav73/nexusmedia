@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import CreatePost from "@/components/CreatePost";
 import PostCard from "@/components/PostCard";
+import { followUser, unfollowUser, getFollowSuggestions } from "@/http/follow";
 
 type Post = {
   id: string;
@@ -18,6 +19,62 @@ type Post = {
 const DUMMY_POSTS: Post[] = [];
 
 export default function Homepage() {
+  const [whoToFollow, setWhoToFollow] = useState<
+    Array<{
+      id: number;
+      name: string;
+      image?: string | null;
+      followerCount: number;
+      isFollowing: boolean;
+      loading?: boolean;
+    }>
+  >([]);
+  type Suggestion = {
+    id: number;
+    name: string;
+    image?: string | null;
+    followerCount: number;
+    isFollowing: boolean;
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchSuggestions = async () => {
+      try {
+        const res = await getFollowSuggestions();
+        if (mounted && res?.data) {
+          setWhoToFollow(
+            (res.data as Suggestion[]).map((s) => ({ ...s, loading: false }))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to load suggestions", err);
+      }
+    };
+
+    fetchSuggestions();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const toggleFollow = async (id: number) => {
+    setWhoToFollow((prev) => prev.map((u) => (u.id === id ? { ...u, loading: true } : u)));
+    const user = whoToFollow.find((u) => u.id === id);
+    try {
+      if (!user) throw new Error("User not found");
+      if (user.isFollowing) {
+        await unfollowUser(id);
+        setWhoToFollow((prev) => prev.map((u) => (u.id === id ? { ...u, isFollowing: false, loading: false } : u)));
+      } else {
+        await followUser(id);
+        setWhoToFollow((prev) => prev.map((u) => (u.id === id ? { ...u, isFollowing: true, loading: false } : u)));
+      }
+    } catch (err) {
+      console.error("Follow action failed", err);
+      setWhoToFollow((prev) => prev.map((u) => (u.id === id ? { ...u, loading: false } : u)));
+    }
+  };
   const [posts, setPosts] = useState<Post[]>(DUMMY_POSTS);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +99,7 @@ export default function Homepage() {
           const row = r as Record<string, unknown>;
           return {
             id: String(row["id"] ?? ""),
-            author: { name: String(row["userName"] ?? "Unknown"), avatar: String(row["userImage"] ?? "/avatar.png") },
+            author: { id: String(row["userId"] ?? ""), name: String(row["userName"] ?? "Unknown"), avatar: String(row["userImage"] ?? "/avatar.png") },
             content: String(row["description"] ?? ""),
             image: (row["Image"] ?? null) as string | null,
             likes: 0,
@@ -86,26 +143,24 @@ export default function Homepage() {
             <div className="bg-white dark:bg-gray-800 border rounded-lg p-4">
               <h3 className="font-semibold">Who to follow</h3>
               <div className="mt-3 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100" />
-                    <div>
-                      <div className="font-semibold">Sneha</div>
-                      <div className="text-xs text-gray-500">Photographer</div>
+                {whoToFollow.map((u) => (
+                  <div key={u.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-100" />
+                      <div>
+                        <div className="font-semibold">{u.name}</div>
+                        <div className="text-xs text-gray-500">{u.followerCount} followers</div>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => toggleFollow(u.id)}
+                      disabled={u.loading}
+                      className="text-sm text-blue-600 disabled:opacity-50"
+                    >
+                      {u.loading ? "..." : u.isFollowing ? "Following" : "Follow"}
+                    </button>
                   </div>
-                  <button className="text-sm text-blue-600">Follow</button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100" />
-                    <div>
-                      <div className="font-semibold">Rohit</div>
-                      <div className="text-xs text-gray-500">Developer</div>
-                    </div>
-                  </div>
-                  <button className="text-sm text-blue-600">Follow</button>
-                </div>
+                ))}
               </div>
             </div>
 
